@@ -144,22 +144,30 @@ function createProject(title, photos) {
   const strip = document.createElement("div");
   strip.className = "project-strip";
   strip.dataset.count = String(Math.min(5, orderedPhotos.length));
-  orderedPhotos.slice(0, 5).forEach((photo, index) => {
-    const button = photoButton(photo, title, "project-photo", startIndex + index);
-    if (index === 2 && orderedPhotos.length > 2) {
+  const coverButton = photoButton(orderedPhotos[0], title, "project-photo project-cover", startIndex);
+  strip.append(coverButton);
+
+  const thumbnails = document.createElement("div");
+  thumbnails.className = "project-thumbnails";
+  thumbnails.dataset.count = String(Math.min(4, orderedPhotos.length - 1));
+  orderedPhotos.slice(1, 5).forEach((photo, index) => {
+    const photoIndex = index + 1;
+    const button = photoButton(photo, title, "project-photo", startIndex + photoIndex);
+    if (photoIndex === 2 && orderedPhotos.length > 2) {
       const mobileCount = document.createElement("span");
       mobileCount.className = "more-badge mobile-more";
       mobileCount.textContent = `+${orderedPhotos.length - 2}`;
       button.append(mobileCount);
     }
-    if (index === 4 && orderedPhotos.length > 4) {
+    if (photoIndex === 4 && orderedPhotos.length > 4) {
       const desktopCount = document.createElement("span");
       desktopCount.className = "more-badge desktop-more";
       desktopCount.textContent = `+${orderedPhotos.length - 4}`;
       button.append(desktopCount);
     }
-    strip.append(button);
+    thumbnails.append(button);
   });
+  if (thumbnails.childElementCount) strip.append(thumbnails);
   project.append(heading, strip);
   return project;
 }
