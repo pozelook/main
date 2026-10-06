@@ -23,20 +23,23 @@ a { color:inherit; } button { color:inherit; font:inherit; }
 .project-heading h2 { margin:0; font:500 clamp(1.5rem,3vw,2rem)/1.2 var(--serif); }
 .heading-side { display:flex; align-items:center; gap:.9rem; }
 .heading-side p { margin:0; color:var(--muted); font-size:.82rem; white-space:nowrap; }
-.project-strip { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); gap:.65rem; align-items:stretch; }
-.project-strip[data-count="1"] { grid-template-columns:minmax(0,1fr); }
-.project-thumbnails { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr); gap:.65rem; min-width:0; min-height:0; }
-.project-thumbnails[data-count="1"] { grid-template-columns:minmax(0,1fr); }
+.project-strip { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:.65rem; aspect-ratio:2.2/1; }
+.project-strip[data-count="1"] { grid-template-columns:minmax(0,1fr); aspect-ratio:16/9; }
+.project-thumbnails { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); gap:.65rem; min-width:0; min-height:0; }
+.project-thumbnails[data-count="1"] { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); justify-items:center; align-items:center; }
+.project-thumbnails[data-count="2"] { grid-template-columns:minmax(0,1fr); }
 .project-thumbnails[data-count="3"] .project-photo:last-child { grid-column:span 2; }
 .photo-button { position:relative; display:block; min-width:0; width:100%; padding:0; overflow:hidden; border:0; border-radius:6px; background:#ecebe7; cursor:zoom-in; }
 .photo-button img { display:block; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .4s,transform .5s; }
 .photo-button img.loaded { opacity:1; }
 .expand-badge { position:absolute; right:.6rem; bottom:.6rem; width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.92); font-size:.95rem; box-shadow:0 1px 6px rgba(0,0,0,.2); pointer-events:none; }
 @media (hover:hover) { .photo-button:hover img { transform:scale(1.03); } .project-cover:hover img { transform:none; } .expand-badge { opacity:0; transition:opacity .2s; } .photo-button:hover .expand-badge, .photo-button:focus-visible .expand-badge { opacity:1; } }
-.project-cover { aspect-ratio:4/3; }
+.project-cover { aspect-ratio:auto; }
 .project-photo img { position:absolute; inset:0; }
-.project-strip[data-count="1"] .project-cover { aspect-ratio:16/9; }
-.project-cover img { object-fit:contain; background:#ecebe7; }
+.project-thumbnails[data-count="1"] .project-photo { width:min(100%, min(40vh, 24rem)); height:auto; aspect-ratio:1; }
+.cover-fill { position:absolute; inset:-8%; background-position:center; background-size:cover; filter:blur(18px); opacity:.72; transform:scale(1.08); }
+.project-cover img { z-index:1; object-fit:contain; }
+.project-cover .expand-badge { z-index:2; }
 .project-thumbnails .project-photo { height:100%; min-height:0; }
 .more-badge { position:absolute; inset:0; display:grid; place-items:center; background:rgba(16,16,17,.58); color:#fff; font-size:clamp(1.2rem,3vw,2rem); font-weight:600; }
 .mobile-more { display:none; }
@@ -58,10 +61,10 @@ a { color:inherit; } button { color:inherit; font:inherit; }
   .home-header { min-height:60px; padding:0 1rem; }
   .home-header p { max-width:17ch; text-align:right; font-size:.85rem; }
   .home-main { width:min(calc(100% - 2rem),var(--page-width)); }
-  .project-strip { grid-template-columns:minmax(0,1fr); gap:.4rem; }
+  .project-strip { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; gap:.4rem; aspect-ratio:auto; }
   .project-cover { aspect-ratio:16/10; }
-  .project-thumbnails { grid-template-columns:repeat(2,minmax(0,1fr)); gap:.4rem; }
-  .project-thumbnails .project-photo { aspect-ratio:1; }
+  .project-thumbnails,.project-thumbnails[data-count="2"] { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:minmax(0,1fr); gap:.4rem; }
+  .project-thumbnails .project-photo,.project-thumbnails[data-count="1"] .project-photo { width:100%; height:auto; aspect-ratio:1; }
   .project-thumbnails .project-photo:nth-child(n+3) { display:none; }
   .desktop-more { display:none; }
   .mobile-more { display:grid; }

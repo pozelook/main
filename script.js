@@ -145,6 +145,11 @@ function createProject(title, photos) {
   strip.className = "project-strip";
   strip.dataset.count = String(Math.min(5, orderedPhotos.length));
   const coverButton = photoButton(orderedPhotos[0], title, "project-photo project-cover", startIndex);
+  const coverFill = document.createElement("span");
+  coverFill.className = "cover-fill";
+  coverFill.setAttribute("aria-hidden", "true");
+  coverFill.style.backgroundImage = `url("${imageSource(orderedPhotos[0])}")`;
+  coverButton.prepend(coverFill);
   strip.append(coverButton);
 
   const thumbnails = document.createElement("div");
