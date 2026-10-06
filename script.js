@@ -11,7 +11,6 @@ const CATEGORY_TITLES = {
 };
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif)$/i;
 const COVER_NAME = /^(kapak|cover)([-_.]|$)/i;
-const page = document.body.dataset.page || "home";
 const $ = (id) => document.getElementById(id);
 let lightboxPhotos = [];
 let lightboxIndex = 0;
@@ -92,44 +91,6 @@ async function loadCategories() {
     .sort((a, b) => a.name.localeCompare(b.name, "tr", { numeric: true }));
 }
 
-async function loadCovers() {
-  try {
-    const map = {};
-    imageFiles(await listDirectory(`${CONFIG.photosDir}/kapak`)).forEach((f) => { map[f.name.replace(/\.[^.]+$/, "").toLowerCase()] = imageSource(f); });
-    return map;
-  } catch { return {}; }
-}
-
-function renderCategoryLinks(categories, covers = {}) {
-  const nav = $("categoryList");
-  nav.replaceChildren();
-  if (!categories.length) {
-    nav.append(Object.assign(document.createElement("p"), { className: "loading-note", textContent: "Henüz kategori yok. Fotoğraflar klasörüne kategori klasörü ekleyin." }));
-    return;
-  }
-  categories.forEach((category) => {
-    const link = document.createElement("a");
-    link.className = "category-link";
-    link.href = `galeri.html?tur=${encodeURIComponent(category.name)}`;
-    const src = covers[category.name.toLowerCase()];
-    if (src) {
-      const img = document.createElement("img");
-      img.className = "category-cover";
-      img.src = src;
-      img.alt = "";
-      link.append(img);
-    }
-    const label = document.createElement("span");
-    label.className = "category-name";
-    label.textContent = category.label;
-    const cta = document.createElement("span");
-    cta.className = "category-cta";
-    cta.textContent = "Galeriyi aç";
-    link.append(label, cta);
-    nav.append(link);
-  });
-}
-
 function addToLightbox(photo, label) {
   const index = lightboxPhotos.length;
   lightboxPhotos.push({ src: imageSource(photo), label });
@@ -159,28 +120,6 @@ function photoButton(photo, label, className, index) {
   return button;
 }
 
-function shelfControls(shelf) {
-  const nav = document.createElement("div");
-  nav.className = "shelf-nav";
-  const make = (text, label, dir) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "shelf-btn"; b.textContent = text; b.setAttribute("aria-label", label);
-    b.addEventListener("click", () => shelf.scrollBy({ left: dir * shelf.clientWidth * 0.8, behavior: "smooth" }));
-    return b;
-  };
-  const prev = make("\u2190", "Önceki fotoğraflar", -1), next = make("\u2192", "Sonraki fotoğraflar", 1);
-  const update = () => {
-    const end = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 4;
-    prev.disabled = shelf.scrollLeft < 4; next.disabled = end; shelf.classList.toggle("at-end", end);
-  };
-  shelf.addEventListener("scroll", update, { passive: true });
-  shelf.addEventListener("load", update, true);
-  addEventListener("resize", update);
-  requestAnimationFrame(update);
-  nav.append(prev, next);
-  return nav;
-}
-
 function createProject(title, photos) {
   if (!photos.length) return null;
   const sortedPhotos = [...photos].sort((a, b) => a.name.localeCompare(b.name, "tr", { numeric: true }));
@@ -205,7 +144,6 @@ function createProject(title, photos) {
   const strip = document.createElement("div");
   strip.className = "project-strip";
   strip.dataset.count = String(Math.min(5, orderedPhotos.length));
-  strip.style.gridTemplateColumns = `repeat(${Math.min(5, orderedPhotos.length)}, minmax(0, 1fr))`;
   orderedPhotos.slice(0, 5).forEach((photo, index) => {
     const button = photoButton(photo, title, "project-photo", startIndex + index);
     if (index === 2 && orderedPhotos.length > 2) {
@@ -255,41 +193,6 @@ async function renderHome() {
   $("status").textContent = "Henüz kategori yok. Fotoğraflar klasörüne kategori klasörü ekleyin.";
 }
 
-async function renderGallery() {
-  const categoryKey = new URLSearchParams(location.search).get("tur");
-  if (!categoryKey || categoryKey.includes("/") || categoryKey.includes("\\")) {
-    $("categoryTitle").textContent = "Kategori bulunamadı";
-    $("status").textContent = "Bir galeri seçmek için ana sayfaya dönün.";
-    return;
-  }
-
-  const categories = await loadCategories();
-  const category = categories.find((item) => item.name === categoryKey);
-  if (!category) {
-    $("categoryTitle").textContent = "Kategori bulunamadı";
-    $("status").textContent = "Bu kategori henüz yüklenmemiş. Ana sayfaya dönüp başka bir kategori seçin.";
-    return;
-  }
-
-  document.title = `${category.label} | pozelook`;
-  $("categoryTitle").textContent = category.label;
-  const entries = await listDirectory(category.path);
-  const projectEntries = entries.filter((entry) => entry.type === "dir").sort((a, b) => a.name.localeCompare(b.name, "tr"));
-  const projectList = [];
-  const loosePhotos = imageFiles(entries);
-  if (loosePhotos.length) projectList.push(createProject("Genel seçki", loosePhotos));
-  const folderPhotos = await Promise.all(projectEntries.map(async (folder) => imageFiles(await listDirectory(folder.path))));
-  projectEntries.forEach((folder, i) => {
-    if (folderPhotos[i].length) projectList.push(createProject(prettyName(folder.name), folderPhotos[i]));
-  });
-
-  const projects = $("projects");
-  projects.replaceChildren(...projectList.filter(Boolean));
-  $("status").textContent = projectList.some(Boolean)
-    ? "Bir fotoğrafa tıklayarak büyütebilir, tüm fotoğrafları oklarla gezebilirsiniz."
-    : "Bu kategoride henüz fotoğraf yok. Organizasyon klasörünü eklediğinizde galeri burada görünür.";
-}
-
 function openLightbox(index) {
   if (!lightboxPhotos.length) return;
   lightboxIndex = (index + lightboxPhotos.length) % lightboxPhotos.length;
@@ -330,16 +233,8 @@ function bindLightbox() {
 }
 
 $("year").textContent = new Date().getFullYear();
-if (page === "home") {
-  bindLightbox();
-  renderHome().catch((error) => {
-    console.error(error);
-    $("status").textContent = `Portfolyo yüklenemedi: ${error.message}`;
-  });
-} else {
-  bindLightbox();
-  renderGallery().catch((error) => {
-    console.error(error);
-    $("status").textContent = `Fotoğraflar yüklenemedi: ${error.message}`;
-  });
-}
+bindLightbox();
+renderHome().catch((error) => {
+  console.error(error);
+  $("status").textContent = `Portfolyo yüklenemedi: ${error.message}`;
+});
