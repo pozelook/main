@@ -136,12 +136,11 @@ function addToLightbox(photo, label) {
   return index;
 }
 
-function photoButton(photo, label, className) {
+function photoButton(photo, label, className, index) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = `photo-button ${className}`;
   button.setAttribute("aria-label", `${label} fotoğrafını büyüt`);
-  const index = addToLightbox(photo, label);
   const image = document.createElement("img");
   image.src = imageSource(photo);
   image.alt = label;
@@ -187,6 +186,9 @@ function createProject(title, photos) {
   const sortedPhotos = [...photos].sort((a, b) => a.name.localeCompare(b.name, "tr", { numeric: true }));
   const coverIndex = sortedPhotos.findIndex((photo) => COVER_NAME.test(photo.name));
   const cover = coverIndex >= 0 ? sortedPhotos.splice(coverIndex, 1)[0] : sortedPhotos.shift();
+  const orderedPhotos = [cover, ...sortedPhotos];
+  const startIndex = lightboxPhotos.length;
+  orderedPhotos.forEach((photo) => addToLightbox(photo, title));
   const project = document.createElement("article");
   project.className = "project";
   const heading = document.createElement("div");
@@ -194,22 +196,63 @@ function createProject(title, photos) {
   const name = document.createElement("h2");
   name.textContent = title;
   const count = document.createElement("p");
-  count.textContent = `${sortedPhotos.length + 1} fotoğraf`;
+  count.textContent = `${orderedPhotos.length} fotoğraf`;
   const side = document.createElement("div");
   side.className = "heading-side";
   side.append(count);
   heading.append(name, side);
 
-  const layout = document.createElement("div");
-  layout.className = "project-layout";
-  layout.append(photoButton(cover, `${title} kapak`, "project-cover"));
-  const shelf = document.createElement("div");
-  shelf.className = "project-shelf";
-  sortedPhotos.forEach((photo) => shelf.append(photoButton(photo, title, "project-photo")));
-  layout.append(shelf);
-  if (sortedPhotos.length) side.append(shelfControls(shelf));
-  project.append(heading, layout);
+  const strip = document.createElement("div");
+  strip.className = "project-strip";
+  strip.dataset.count = String(Math.min(5, orderedPhotos.length));
+  strip.style.gridTemplateColumns = `repeat(${Math.min(5, orderedPhotos.length)}, minmax(0, 1fr))`;
+  orderedPhotos.slice(0, 5).forEach((photo, index) => {
+    const button = photoButton(photo, title, "project-photo", startIndex + index);
+    if (index === 2 && orderedPhotos.length > 2) {
+      const mobileCount = document.createElement("span");
+      mobileCount.className = "more-badge mobile-more";
+      mobileCount.textContent = `+${orderedPhotos.length - 2}`;
+      button.append(mobileCount);
+    }
+    if (index === 4 && orderedPhotos.length > 4) {
+      const desktopCount = document.createElement("span");
+      desktopCount.className = "more-badge desktop-more";
+      desktopCount.textContent = `+${orderedPhotos.length - 4}`;
+      button.append(desktopCount);
+    }
+    strip.append(button);
+  });
+  project.append(heading, strip);
   return project;
+}
+
+async function renderHome() {
+  const categories = await loadCategories();
+  const portfolio = $("portfolio");
+  const sections = await Promise.all(categories.map(async (category) => {
+    const entries = await listDirectory(category.path);
+    const projectEntries = entries.filter((entry) => entry.type === "dir").sort((a, b) => a.name.localeCompare(b.name, "tr", { numeric: true }));
+    const projects = [];
+    const loosePhotos = imageFiles(entries);
+    if (loosePhotos.length) projects.push(createProject("Genel seçki", loosePhotos));
+    const folderPhotos = await Promise.all(projectEntries.map(async (folder) => imageFiles(await listDirectory(folder.path))));
+    projectEntries.forEach((folder, index) => {
+      if (folderPhotos[index].length) projects.push(createProject(prettyName(folder.name), folderPhotos[index]));
+    });
+
+    const section = document.createElement("section");
+    section.className = "category-section";
+    const title = document.createElement("h1");
+    title.textContent = category.label;
+    const projectList = document.createElement("div");
+    projectList.className = "projects";
+    projectList.append(...projects.filter(Boolean));
+    section.append(title, projectList);
+    return section;
+  }));
+  portfolio.replaceChildren(...sections);
+  $("status").hidden = sections.length > 0;
+  $("status").textContent = "Henüz kategori yok. Fotoğraflar klasörüne kategori klasörü ekleyin.";
 }
 
 async function renderGallery() {
@@ -243,7 +286,7 @@ async function renderGallery() {
   const projects = $("projects");
   projects.replaceChildren(...projectList.filter(Boolean));
   $("status").textContent = projectList.some(Boolean)
-    ? "Büyütmek için bir fotoğrafa tıklayın; sağdaki sıra oklarla veya kaydırarak gezilir."
+    ? "Bir fotoğrafa tıklayarak büyütebilir, tüm fotoğrafları oklarla gezebilirsiniz."
     : "Bu kategoride henüz fotoğraf yok. Organizasyon klasörünü eklediğinizde galeri burada görünür.";
 }
 
@@ -288,9 +331,10 @@ function bindLightbox() {
 
 $("year").textContent = new Date().getFullYear();
 if (page === "home") {
-  Promise.all([loadCategories(), loadCovers()]).then(([c, covers]) => renderCategoryLinks(c, covers)).catch((error) => {
+  bindLightbox();
+  renderHome().catch((error) => {
     console.error(error);
-    $("status").textContent = `Kategoriler yüklenemedi: ${error.message}`;
+    $("status").textContent = `Portfolyo yüklenemedi: ${error.message}`;
   });
 } else {
   bindLightbox();

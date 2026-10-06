@@ -13,15 +13,22 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="landing-page">
-  <main class="landing-shell">
+<body class="home-page" data-page="home">
+  <header class="home-header">
     <a class="wordmark" href="index.html" aria-label="pozelook ana sayfa">poze<span>look</span></a>
-    <p class="landing-note">Her hikayenin kendine ait bir karesi var.</p>
-    <nav class="category-list" id="categoryList" aria-label="Fotoğraf kategorileri">
-      <p class="loading-note" id="status">Kategoriler yükleniyor...</p>
-    </nav>
-    <p class="landing-footer">© <span id="year"></span> pozelook</p>
+    <p>Her hikayenin kendine ait bir karesi var.</p>
+  </header>
+  <main class="home-main">
+    <p class="loading-note" id="status">Portfolyo yükleniyor...</p>
+    <div id="portfolio" class="portfolio" aria-live="polite"></div>
   </main>
+  <footer class="site-footer">© <span id="year"></span> pozelook</footer>
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Fotoğraf görüntüleyici">
+    <button class="lightbox-close" id="lbClose" aria-label="Kapat">Kapat <span aria-hidden="true">&#215;</span></button>
+    <button class="lightbox-arrow previous" id="lbPrev" aria-label="Önceki fotoğraf">&#8592;</button>
+    <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+    <button class="lightbox-arrow next" id="lbNext" aria-label="Sonraki fotoğraf">&#8594;</button>
+  </div>
   <noscript><p style="text-align:center">Galeriyi görmek için JavaScript gerekli.</p></noscript>
   <script src="script.js"></script>
 </body>
